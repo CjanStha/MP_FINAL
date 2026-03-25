@@ -218,7 +218,77 @@ def _get_amenity_stats(lat, lng, radius):
     return stats
 
 
-def _distance_point_to_segment_m(px, py, x1, y1, x2, y2):
+def _get_demographic_info(lat, lng):
+    """
+    Get demographic information for the given location.
+    Returns a dictionary with ward population data and analysis.
+    """
+    from .serializers import DemographicInfoSerializer
+    
+    # Find the ward containing the point
+    primary_ward = None
+    for ward in Ward.objects.all():
+        # Simple point-in-polygon check using boundary
+        if ward.boundary and isinstance(ward.boundary, dict):
+            if point_in_polygon(lng, lat, ward.boundary):
+                primary_ward = ward
+                break
+    
+    if not primary_ward:
+        # If no ward found, use the closest ward or a default
+        primary_ward = Ward.objects.all().first()
+    
+    if primary_ward:
+        avg_household_size = 0
+        if primary_ward.households and primary_ward.households > 0:
+            avg_household_size = primary_ward.population / primary_ward.households
+        
+        # Categorize population
+        if primary_ward.population < 10000:
+            population_category = 'Low Population'
+        elif primary_ward.population < 15000:
+            population_category = 'Moderate Population'
+        else:
+            population_category = 'High Population'
+        
+        # Market potential analysis
+        if primary_ward.population_density > 12000:
+            market_potential = 'High Demand Market'
+        elif primary_ward.population_density > 8000:
+            market_potential = 'Good Demand Market'
+        else:
+            market_potential = 'Growing Market'
+        
+        demo_data = {
+            'ward_number': primary_ward.ward_number,
+            'population': primary_ward.population,
+            'population_density': primary_ward.population_density,
+            'households': primary_ward.households,
+            'average_household_size': round(avg_household_size, 2),
+            'area_sqkm': primary_ward.area_sqkm,
+            'density_category': 'High Density' if primary_ward.population_density > 12000 else 
+                               ('Moderate Density' if primary_ward.population_density > 8000 else 'Low Density'),
+            'population_category': population_category,
+            'market_potential': market_potential,
+        }
+    else:
+        # Default/fallback
+        demo_data = {
+            'ward_number': 0,
+            'population': 0,
+            'population_density': 10000,
+            'households': 0,
+            'average_household_size': 4.5,
+            'area_sqkm': 1.0,
+            'density_category': 'Unknown',
+            'population_category': 'Unknown',
+            'market_potential': 'Unknown',
+        }
+    
+    return demo_data
+
+
+
     """
     Approximate shortest distance (meters) from point (px,py) to segment (x1,y1)-(x2,y2).
     Uses an equirectangular projection around the point for small-distance accuracy.
@@ -946,10 +1016,14 @@ class SuitabilityAnalysisView(APIView):
         )
         prediction.update(type_recommendation)
 
+        # Get demographic information
+        demographic_info = _get_demographic_info(lat, lng)
+
         return Response({
             'location':     {'lat': lat, 'lng': lng},
             'nearby_count': total_competitors,
             'top5':         CafeSerializer(top5_qs, many=True).data,
+            'demographics': demographic_info,
             'suitability': {
                 'score':              regression_score,
                 'level':              prediction.get('predicted_suitability', 'Unknown'),

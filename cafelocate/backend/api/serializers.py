@@ -1,21 +1,27 @@
 from rest_framework import serializers
 from .models import Cafe, Ward, UserProfile, Amenity, AnalysisHistory
 from .location_validation import is_within_kathmandu_metropolitan_city
+import math
 
 
 # ═══════════════════════════════════════════════════════════════════
-# CafeSerializer
+# CafeSerializer - Enhanced with Rating & Review Analysis
 # Converts a Cafe database object → JSON for the frontend
 # ═══════════════════════════════════════════════════════════════════
 class CafeSerializer(serializers.ModelSerializer):
 
     # Extra field not in the model — calculated from rating × log(reviews)
-    # SerializerMethodField = computed field, not directly from DB column
     score = serializers.SerializerMethodField()
+    
+    # Enhanced rating fields
+    star_rating = serializers.SerializerMethodField()
+    rating_category = serializers.SerializerMethodField()
+    rating_text = serializers.SerializerMethodField()
+    review_summary = serializers.SerializerMethodField()
 
     class Meta:
-        model  = Cafe      # which model to serialize
-        fields = [         # which fields to include in JSON output
+        model  = Cafe
+        fields = [
             'id',
             'place_id',
             'name',
@@ -25,22 +31,70 @@ class CafeSerializer(serializers.ModelSerializer):
             'rating',
             'review_count',
             'is_open',
-            'score',        # our calculated field
+            'score',
+            'star_rating',
+            'rating_category',
+            'rating_text',
+            'review_summary',
         ]
-        # NOTE: 'location' (PointField geometry) is intentionally excluded
-        #       because it produces complex GeoJSON that the frontend doesn't need.
-        #       We expose latitude/longitude instead (simpler for Leaflet.js).
 
     def get_score(self, obj):
         """Weighted score used to rank Top 5 cafes.
         Formula: rating × log(review_count + 1)
-        Higher rating AND more reviews = higher score.
-        The +1 avoids log(0) error for cafes with 0 reviews.
         """
-        import math
         if obj.rating is None:
             return 0
         return round(obj.rating * math.log(obj.review_count + 1), 2)
+
+    def get_star_rating(self, obj):
+        """Convert numeric rating to star emoji representation"""
+        if obj.rating is None:
+            return '⭐ N/A'
+        
+        full_stars = int(obj.rating)
+        remainder = obj.rating - full_stars
+        
+        stars = '⭐' * full_stars
+        if remainder >= 0.5:
+            stars += '✨'  # Half star
+        
+        return f"{stars} {obj.rating}"
+
+    def get_rating_category(self, obj):
+        """Categorize rating quality"""
+        if obj.rating is None:
+            return 'Not Rated'
+        elif obj.rating >= 4.5:
+            return 'Excellent'
+        elif obj.rating >= 4.0:
+            return 'Very Good'
+        elif obj.rating >= 3.5:
+            return 'Good'
+        elif obj.rating >= 3.0:
+            return 'Average'
+        else:
+            return 'Below Average'
+
+    def get_rating_text(self, obj):
+        """Provide human-friendly rating text"""
+        category = self.get_rating_category(obj)
+        if obj.review_count and obj.review_count > 0:
+            return f"{category} - {obj.rating}/5 ({obj.review_count} reviews)"
+        else:
+            return f"{category} - {obj.rating}/5 (No reviews yet)"
+
+    def get_review_summary(self, obj):
+        """Provide review engagement analysis"""
+        if obj.review_count is None or obj.review_count == 0:
+            return "No customer reviews yet"
+        elif obj.review_count < 10:
+            return f"Early stage - {obj.review_count} review(s)"
+        elif obj.review_count < 50:
+            return f"Growing popularity - {obj.review_count} reviews"
+        elif obj.review_count < 100:
+            return f"Popular - {obj.review_count} customer reviews"
+        else:
+            return f"Well-established - {obj.review_count} customer reviews"
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -59,6 +113,70 @@ class AmenitySerializer(serializers.ModelSerializer):
             'latitude',
             'longitude',
         ]
+
+
+# ═══════════════════════════════════════════════════════════════════
+# WardSerializer
+# Converts Ward demographic data to JSON
+# ═══════════════════════════════════════════════════════════════════
+class WardSerializer(serializers.ModelSerializer):
+    
+    population_formatted = serializers.SerializerMethodField()
+    density_category = serializers.SerializerMethodField()
+    households_per_capita = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Ward
+        fields = [
+            'ward_number',
+            'population',
+            'population_formatted',
+            'households',
+            'area_sqkm',
+            'population_density',
+            'density_category',
+            'households_per_capita',
+        ]
+
+    def get_population_formatted(self, obj):
+        """Format population with thousands separator"""
+        if obj.population:
+            return f"{obj.population:,}"
+        return "0"
+
+    def get_density_category(self, obj):
+        """Categorize population density"""
+        density = obj.population_density
+        if density < 8000:
+            return 'Low Density'
+        elif density < 12000:
+            return 'Moderate Density'
+        else:
+            return 'High Density'
+
+    def get_households_per_capita(self, obj):
+        """Calculate average household size"""
+        if obj.households and obj.population and obj.households > 0:
+            return round(obj.population / obj.households, 2)
+        return 0
+
+
+# ═══════════════════════════════════════════════════════════════════
+# DemographicInfoSerializer
+# Aggregated demographic analysis for suitability analysis
+# ═══════════════════════════════════════════════════════════════════
+class DemographicInfoSerializer(serializers.Serializer):
+    """Serializer for demographic information (not a model)"""
+    
+    ward_number = serializers.IntegerField()
+    population = serializers.IntegerField()
+    population_density = serializers.FloatField()
+    households = serializers.IntegerField()
+    average_household_size = serializers.FloatField()
+    area_sqkm = serializers.FloatField()
+    density_category = serializers.CharField()
+    population_category = serializers.CharField()
+    market_potential = serializers.CharField()
 
 
 # ═══════════════════════════════════════════════════════════════════
