@@ -675,16 +675,75 @@ body {
 .cafe-item:hover {
     box-shadow: var(--shadow-sm);
     border-color: var(--primary-color);
+    background: #f8f9ff;
+}
+
+.cafe-info {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    flex: 1;
+    min-width: 0;
+}
+
+.cafe-rank {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    min-width: 30px;
+    text-align: center;
+}
+
+.cafe-details {
+    flex: 1;
+    min-width: 0;
 }
 
 .cafe-name {
     font-weight: 600;
     color: var(--text-primary);
+    margin-bottom: 2px;
+    word-break: break-word;
+}
+
+.cafe-type {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+    margin-bottom: 4px;
 }
 
 .cafe-rating {
-    color: var(--warning-color);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.rating-stars {
     font-weight: 600;
+    color: #f39c12;
+    font-size: 0.95rem;
+}
+
+.rating-category {
+    font-size: 0.8rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.no-rating {
+    font-size: 0.85rem;
+    color: #999;
+    font-style: italic;
+}
+
+.review-info {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 2px;
 }
 
 .no-data {
@@ -757,6 +816,76 @@ body {
     background: var(--bg-primary);
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
+}
+
+/* Demographic Information */
+.demographic-section {
+    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+    border: 2px solid #81c784;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+}
+
+.demographic-section h3 {
+    color: #2e7d32;
+    margin-bottom: var(--spacing-md);
+    font-size: 1.1rem;
+}
+
+.demographic-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+.demographic-item {
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border-left: 4px solid #4caf50;
+}
+
+.demographic-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.demographic-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.demographic-category {
+    background: #c8e6c9;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.demographic-market {
+    background: #fff9c4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #f57f17;
+    font-size: 0.9rem;
+}
+
+/* Cafe popup enhancement */
+.cafe-popup {
+    font-family: Arial, sans-serif !important;
+}
+
+.cafe-popup .leaflet-popup-content {
+    padding: 8px !important;
+    margin: 0 !important;
 }
 
 .model-score.ensemble {

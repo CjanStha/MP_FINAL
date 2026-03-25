@@ -1,0 +1,41 @@
+{
+  "random_forest_v1_r2": 0.802555319530053,
+  "random_forest_v1_rmse": 0.3604014814249346,
+  "random_forest_v1_mae": 0.14011945483809118,
+  "random_forest_v2_r2": 0.802555319530053,
+  "random_forest_v2_rmse": 0.3604014814249346,
+  "random_forest_v2_mae": 0.14011945483809118,
+  "xgboost_v1_accuracy": 0.9509090909090909,
+  "xgboost_v2_accuracy": 0.9509090909090909,
+  "ahp_initial_weights": [
+    0.28562261406822204,
+    0.20446484368544657,
+    0.1472973493842098,
+    0.08635199142190286,
+    0.08340048515114545,
+    0.07885875795910861,
+    0.06746992966248416,
+    0.04653402866748054
+  ],
+  "ahp_optimized_weights": [
+    0.2856226140682238,
+    0.20446484368544748,
+    0.14729734938421016,
+    0.08635199142190261,
+    0.08340048515114518,
+    0.07885875795910828,
+    0.06746992966248261,
+    0.046534028667479896
+  ],
+  "ahp_consistency_ratio": 0.032648462494580206,
+  "features": [
+    "pop_density",
+    "accessibility",
+    "foot_traffic",
+    "competition_pressure",
+    "competitor_count",
+    "transit_access",
+    "rating",
+    "review_volume"
+  ]
+}

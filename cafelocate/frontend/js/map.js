@@ -234,13 +234,27 @@ class MapManager {
                 fillOpacity: 0.8
             }).addTo(this.map);
 
-            const ratingLine = cafe.rating ? `Rating: ⭐ ${cafe.rating}<br>` : '';
+            // Enhanced popup with rating and review data
+            const ratingSection = cafe.rating ? `
+                <div style="margin: 8px 0; padding: 8px 0; border-top: 1px solid #eee;">
+                    <div><strong>${cafe.star_rating || cafe.rating}</strong></div>
+                    <small style="color: #666;">${cafe.rating_category || ''}</small><br>
+                    <small style="color: #888;">${cafe.review_summary || `${cafe.review_count || 0} reviews`}</small>
+                </div>
+            ` : '<div style="color: #999;"><small>Not yet rated</small></div>';
+
+            const cafeTypeFormatted = (cafe.cafe_type || '').replace(/_/g, ' ');
+            
             marker.bindPopup(`
-                <b>${cafe.name}</b><br>
-                <small>Type: ${(cafe.cafe_type || '').replace('_', ' ')}</small><br>
-                ${ratingLine}
-                Reviews: ${cafe.review_count || 0}
-            `);
+                <div style="min-width: 200px; font-family: Arial, sans-serif;">
+                    <b style="font-size: 14px;">${cafe.name}</b><br>
+                    <small style="color: #666;">Type: ${cafeTypeFormatted}</small>
+                    ${ratingSection}
+                </div>
+            `, {
+                maxWidth: 250,
+                className: 'cafe-popup'
+            });
 
             this.cafeMarkers.push(marker);
         });
@@ -298,12 +312,27 @@ class MapManager {
             if (data.top5.length === 0) {
                 top5List.innerHTML = '<p class="no-data">No cafes found in this area</p>';
             } else {
-                top5List.innerHTML = data.top5.map(cafe => {
-                    const ratingHtml = cafe.rating ? `<div class="cafe-rating">⭐ ${cafe.rating}</div>` : '';
+                top5List.innerHTML = data.top5.map((cafe, idx) => {
+                    const ratingHtml = cafe.rating ? `
+                        <div class="cafe-rating">
+                            <span class="rating-stars">${cafe.star_rating || cafe.rating}</span>
+                            <span class="rating-category">${cafe.rating_category || ''}</span>
+                        </div>
+                    ` : '<div class="cafe-rating"><span class="no-rating">Not rated</span></div>';
+                    
+                    const reviewsInfo = `<small class="review-info">${cafe.review_summary || `${cafe.review_count || 0} reviews`}</small>`;
+                    
                     return `
                     <div class="cafe-item">
-                        <div class="cafe-name">${cafe.name}</div>
-                        ${ratingHtml}
+                        <div class="cafe-info">
+                            <div class="cafe-rank">#${idx + 1}</div>
+                            <div class="cafe-details">
+                                <div class="cafe-name">${cafe.name}</div>
+                                <div class="cafe-type">${(cafe.cafe_type || '').replace(/_/g, ' ')}</div>
+                                ${ratingHtml}
+                                ${reviewsInfo}
+                            </div>
+                        </div>
                     </div>
                 `;
                 }).join('');
@@ -349,6 +378,50 @@ class MapManager {
                 if (metricBox) metricBox.style.display = 'none';
             }
         }
+
+        // Display demographic information
+        this.displayDemographicInfo(data.demographics);
+    }
+
+    displayDemographicInfo(demographics) {
+        if (!demographics) return;
+
+        const demographicEl = document.getElementById('demographic-info');
+        if (!demographicEl) return;
+
+        const html = `
+            <div class="demographic-section">
+                <h3>📊 Local Demographics</h3>
+                <div class="demographic-grid">
+                    <div class="demographic-item">
+                        <span class="demographic-label">Ward #</span>
+                        <span class="demographic-value">${demographics.ward_number || '-'}</span>
+                    </div>
+                    <div class="demographic-item">
+                        <span class="demographic-label">Population</span>
+                        <span class="demographic-value">${demographics.population ? demographics.population.toLocaleString() : '-'}</span>
+                    </div>
+                    <div class="demographic-item">
+                        <span class="demographic-label">Avg Household Size</span>
+                        <span class="demographic-value">${demographics.average_household_size || '-'} persons</span>
+                    </div>
+                    <div class="demographic-item">
+                        <span class="demographic-label">Area</span>
+                        <span class="demographic-value">${demographics.area_sqkm || '-'} km²</span>
+                    </div>
+                    <div class="demographic-item">
+                        <span class="demographic-label">Density Category</span>
+                        <span class="demographic-value demographic-category">${demographics.density_category || '-'}</span>
+                    </div>
+                    <div class="demographic-item">
+                        <span class="demographic-label">Market Potential</span>
+                        <span class="demographic-value demographic-market">${demographics.market_potential || '-'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        demographicEl.innerHTML = html;
     }
 
     updateScoreCircle(score) {
