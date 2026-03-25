@@ -1282,3 +1282,145 @@ class AnalysisHistoryView(APIView):
             'history': serializer.data,
         })
 
+
+# ═══════════════════════════════════════════════════════════════════
+# VIEW 9: ML MODEL PREDICTIONS
+# POST /api/ml-prediction/
+# Uses trained Random Forest and XGBoost models for cafe suitability scoring
+# ═══════════════════════════════════════════════════════════════════
+class MLSuitabilityPredictionView(APIView):
+    """
+    ML-based cafe suitability prediction endpoint.
+    Combines Random Forest regression and XGBoost classification for ensemble predictions.
+    """
+    
+    def post(self, request):
+        """
+        POST /api/ml-prediction/
+        
+        Request body:
+        {
+            "lat": 27.7172,
+            "lng": 85.3240,
+            "radius": 500,
+            "cafe_type": "coffee_shop"
+        }
+        
+        Response:
+        {
+            "status": "success",
+            "predictions": {
+                "random_forest": {score, r2, mae},
+                "xgboost": {tier, confidence, probabilities},
+                "ensemble": {tier, score, recommendation}
+            },
+            "features_used": {...},
+            "suitability_info": {...}
+        }
+        """
+        import numpy as np
+        
+        try:
+            lat = float(request.data.get('lat'))
+            lng = float(request.data.get('lng'))
+            radius = float(request.data.get('radius', 500))
+            cafe_type = request.data.get('cafe_type', 'coffee_shop').strip()
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'lat and lng are required numbers'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not is_within_kathmandu_metropolitan_city(lat, lng):
+            return Response(
+                {'error': 'Location pinning is allowed only inside Kathmandu Metropolitan City.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from ml_engine.suitability_predictor import CafeSuitabilityPredictor
+            
+            predictor = CafeSuitabilityPredictor()
+            
+            # Gather features
+            amenity_stats = _get_amenity_stats(lat, lng, radius)
+            nearby_cafes = []
+            for cafe in Cafe.objects.filter(is_open=True):
+                cafe_lat, cafe_lng = None, None
+                if cafe.location and isinstance(cafe.location, dict):
+                    coords = cafe.location.get('coordinates', [None, None])
+                    if len(coords) >= 2:
+                        cafe_lng, cafe_lat = coords[0], coords[1]
+                elif cafe.latitude and cafe.longitude:
+                    cafe_lat, cafe_lng = cafe.latitude, cafe.longitude
+                
+                if cafe_lat is not None and cafe_lng is not None:
+                    distance = haversine_distance(lat, lng, cafe_lat, cafe_lng)
+                    if distance <= radius:
+                        nearby_cafes.append(cafe)
+            
+            # Get demographic info
+            demographic_info = _get_demographic_info(lat, lng)
+            pop_density = demographic_info.get('population_density', 10000)
+            
+            # Build features for ML models
+            features_dict = {
+                'population_density': min(1.0, pop_density / 15000.0),
+                'osm_amenity_count_500m': min(1.0, amenity_stats['bus_stops_within_500m'] / 10.0),
+                'school_count_750m': min(1.0, amenity_stats['schools_within_500m'] / 5.0),
+                'hospital_count_750m': min(1.0, amenity_stats['hospitals_within_500m'] / 3.0),
+                'rating_normalized': 0.85,  # Average from dataset
+                'review_normalized': 0.02   # Average from dataset
+            }
+            
+            # Get predictions from both models
+            rf_prediction = predictor.predict_random_forest(features_dict)
+            xgb_prediction = predictor.predict_xgboost(features_dict)
+            ensemble_prediction = predictor.predict_ensemble(features_dict)
+            
+            # Summary tier
+            ensemble_tier = ensemble_prediction['tier']
+            tier_emoji = '🟢' if ensemble_tier == 'High' else ('🟡' if ensemble_tier == 'Medium' else '🔴')
+            
+            return Response({
+                'status': 'success',
+                'location': {'lat': lat, 'lng': lng, 'radius': radius},
+                'predictions': {
+                    'random_forest': rf_prediction,
+                    'xgboost': xgb_prediction,
+                    'ensemble': {
+                        'tier': ensemble_tier,
+                        'score': ensemble_prediction['score'],
+                        'confidence': ensemble_prediction['confidence'],
+                        'recommendation': ensemble_prediction['recommendation'],
+                        'emoji': tier_emoji
+                    }
+                },
+                'features_used': features_dict,
+                'context': {
+                    'nearby_cafes': len(nearby_cafes),
+                    'population_density': pop_density,
+                    'amenities': {
+                        'schools_750m': amenity_stats['schools_within_500m'],
+                        'hospitals_750m': amenity_stats['hospitals_within_500m'],
+                        'bus_stops_500m': amenity_stats['bus_stops_within_500m']
+                    }
+                },
+                'model_info': {
+                    'random_forest_r2': predictor.metadata['random_forest_v2_r2'],
+                    'xgboost_accuracy': predictor.metadata['xgboost_v2_accuracy']
+                }
+            })
+        
+        except ImportError:
+            return Response(
+                {'error': 'ML models not loaded. Please train and save models first.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            logger.error(f'ML prediction error: {str(e)}')
+            return Response(
+                {'error': f'Prediction failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+

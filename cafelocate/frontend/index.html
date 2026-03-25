@@ -166,6 +166,41 @@
                         </div>
                     </div>
 
+                    <!-- ML Model Predictions -->
+                    <div class="result-section" id="ml-predictions-section" style="display: none;">
+                        <h4>🧠 AI Model Predictions</h4>
+                        <div id="ml-predictions" class="ml-results">
+                            <div class="ml-model-result">
+                                <strong>Random Forest (Regression)</strong>
+                                <div style="margin: 8px 0;">
+                                    <span class="metric-label">Score:</span>
+                                    <span id="ml-rf-score" class="metric-value">-</span>/10
+                                </div>
+                                <small style="color: #666;" id="ml-rf-info">R² = - (Regression accuracy)</small>
+                            </div>
+                            <div class="ml-model-result" style="margin-top: 10px;">
+                                <strong>XGBoost (Classification)</strong>
+                                <div style="margin: 8px 0;">
+                                    <span class="metric-label">Tier:</span>
+                                    <span id="ml-xgb-tier" class="metric-value">-</span>
+                                </div>
+                                <div style="margin: 4px 0;">
+                                    <span class="metric-label">Confidence:</span>
+                                    <span id="ml-xgb-confidence" class="metric-value">-</span>%
+                                </div>
+                                <small style="color: #666;" id="ml-xgb-info">Classification accuracy</small>
+                            </div>
+                            <div class="ml-model-result"  style="margin-top: 10px;">
+                                <strong>Ensemble (Combined)</strong>
+                                <div style="margin: 8px 0;">
+                                    <span id="ml-ensemble-emoji">🟡</span>
+                                    <span id="ml-ensemble-tier" class="metric-value">-</span>
+                                </div>
+                                <div style="margin: 4px 0; font-size: 12px; color: #555;" id="ml-ensemble-rec">-</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Nearby 5 Cafes -->
                     <div class="result-section">
                         <h4>⭐ Nearby 5 Cafes</h4>

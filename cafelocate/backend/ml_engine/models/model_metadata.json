@@ -1,0 +1,23 @@
+{
+  "trained_date": "2026-03-25T15:56:32.274089",
+  "features": [
+    "population_density",
+    "osm_amenity_count_500m",
+    "school_count_750m",
+    "hospital_count_750m",
+    "rating_normalized",
+    "review_normalized"
+  ],
+  "random_forest_v2_r2": 0.9918991637943922,
+  "random_forest_v2_rmse": 0.14851103663291945,
+  "random_forest_v2_mae": 0.11365025924061158,
+  "xgboost_v2_accuracy": 0.9516324062877872,
+  "ahp_optimized_weights": [
+    0.4628,
+    0.1467,
+    0.1065,
+    0.0348,
+    0.0247,
+    0.1031
+  ]
+}

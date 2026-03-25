@@ -41,6 +41,10 @@ urlpatterns = [
     # GET /api/history/?cafe_type=coffee_shop
     # Returns saved analysis history for logged-in users
     path('history/', views.AnalysisHistoryView.as_view(), name='analysis-history'),
+    
+    # POST /api/ml-prediction/
+    # ML-based cafe suitability prediction using Random Forest + XGBoost ensemble
+    path('ml-prediction/', views.MLSuitabilityPredictionView.as_view(), name='ml-prediction'),
 ]
 
 # Final URL structure:

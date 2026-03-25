@@ -208,6 +208,17 @@ class MapManager {
                 this.displayNearbyCafes(analysisData.top5);
             }
 
+            // Get ML predictions
+            try {
+                const mlPredictions = await window.apiManager.getMLPrediction(
+                    lat, lng, this.selectedCafeType, this.analysisRadius
+                );
+                this.displayMLPredictions(mlPredictions);
+            } catch (mlError) {
+                console.warn('ML prediction failed (non-critical):', mlError);
+                // Don't fail the whole analysis if ML prediction fails
+            }
+
             this.loadHistoryForCurrentType();
 
         } catch (error) {
@@ -435,6 +446,67 @@ class MapManager {
         else if (normalizedScore < 7) color = '#fdcb6e'; // yellow
 
         scoreCircle.style.background = `conic-gradient(${color} 0% ${fillPercent}%, #e9ecef ${fillPercent}% 100%)`;
+    }
+
+    displayMLPredictions(data) {
+        if (!data || !data.predictions) return;
+
+        const mlSection = document.getElementById('ml-predictions-section');
+        if (!mlSection) return;
+
+        const { random_forest, xgboost, ensemble } = data.predictions;
+
+        // Show the ML predictions section
+        mlSection.style.display = 'block';
+
+        // Random Forest
+        const rfScore = document.getElementById('ml-rf-score');
+        const rfInfo = document.getElementById('ml-rf-info');
+        if (rfScore && random_forest) {
+            rfScore.textContent = Number(random_forest.score || 0).toFixed(2);
+            const r2 = data.model_info?.random_forest_r2 || '-';
+            if (rfInfo) rfInfo.textContent = `R² = ${r2.toFixed ? r2.toFixed(4) : r2} (Regression accuracy)`;
+        }
+
+        // XGBoost
+        const xgbTier = document.getElementById('ml-xgb-tier');
+        const xgbConf = document.getElementById('ml-xgb-confidence');
+        const xgbInfo = document.getElementById('ml-xgb-info');
+        if (xgbTier && xgboost) {
+            xgbTier.textContent = xgboost.tier || '-';
+            const tierColor = {
+                'High': '#00b894',
+                'Medium': '#fdcb6e',
+                'Low': '#e17055'
+            }[xgboost.tier] || '#999';
+            xgbTier.style.color = tierColor;
+            
+            if (xgbConf) {
+                const confPercent = Math.round((xgboost.confidence || 0) * 100);
+                xgbConf.textContent = confPercent;
+            }
+
+            const accuracy = data.model_info?.xgboost_accuracy || '-';
+            if (xgbInfo) xgbInfo.textContent = `Confidence: ${(xgboost.confidence * 100).toFixed(1)}%`;
+        }
+
+        // Ensemble
+        const ensembleEmoji = document.getElementById('ml-ensemble-emoji');
+        const ensembleTier = document.getElementById('ml-ensemble-tier');
+        const ensembleRec = document.getElementById('ml-ensemble-rec');
+        if (ensembleTier && ensemble) {
+            ensembleTier.textContent = ensemble.tier || '-';
+            
+            if (ensembleEmoji) {
+                ensembleEmoji.textContent = ensemble.emoji || '🟡';
+            }
+
+            if (ensembleRec) {
+                ensembleRec.textContent = ensemble.recommendation || 'No recommendation';
+            }
+        }
+
+        console.log('ML Predictions displayed:', data);
     }
 
     updateCoordinatesDisplay(lat, lng) {

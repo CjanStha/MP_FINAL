@@ -75,6 +75,21 @@ class APIManager {
     }
 
     /**
+     * Get ML model predictions (Random Forest + XGBoost)
+     */
+    async getMLPrediction(lat, lng, cafeType, radius = 500) {
+        return this.makeRequest('/ml-prediction/', {
+            method: 'POST',
+            body: JSON.stringify({
+                lat: lat,
+                lng: lng,
+                cafe_type: cafeType,
+                radius: radius
+            })
+        });
+    }
+
+    /**
      * Format errors for user display
      */
     formatError(error) {
