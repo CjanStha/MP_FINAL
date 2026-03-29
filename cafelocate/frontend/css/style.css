@@ -370,6 +370,7 @@ body {
     padding: var(--spacing-lg);
     border-right: 1px solid var(--border-color);
     overflow-y: auto;
+    overflow-x: hidden;
     width: 300px;
     flex-shrink: 0;
 }
@@ -548,8 +549,11 @@ body {
     margin-bottom: var(--spacing-xl);
     padding: var(--spacing-lg);
     background: var(--bg-secondary);
-    border-radius: var(--border-radius);
+    /* border-radius: var(--border-radius); */
+    border-radius: 30px;
     border: 1px solid var(--border-color);
+    overflow: hidden;
+    width: 100%;
 }
 
 .result-section h4 {
@@ -1414,6 +1418,8 @@ body {
     margin-bottom: 25px;
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
+    overflow: hidden;
+    width: 100%;
 }
 
 .result-section:last-child {
@@ -1524,8 +1530,10 @@ body {
 /* Metrics Grid */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     gap: 15px;
+    width: 100%;
+    overflow: hidden;
 }
 
 .metric {
@@ -1533,18 +1541,28 @@ body {
     padding: 15px;
     background: var(--light-bg);
     border-radius: var(--border-radius);
+    min-width: 0;
+    overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .metric-label {
     font-size: 0.9rem;
     color: var(--text-secondary);
     margin-bottom: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
 }
 
 .metric-value {
     font-size: 1.2rem;
     font-weight: bold;
     color: var(--primary-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
 }
 
 /* Loading Indicator */

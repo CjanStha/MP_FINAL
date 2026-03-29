@@ -1,0 +1,28 @@
+{
+  "methodology": "METHOD 2 - HYBRID REGRESSION",
+  "task_type": "Regression (predict continuous suitability 0-10)",
+  "target": "Real cafe suitability based on rating + reviews",
+  "features": [
+    "pop_density",
+    "schools_750m",
+    "hospitals_500m",
+    "ward_population",
+    "competitors_200m",
+    "same_type_competitors"
+  ],
+  "model": "RandomForestRegressor",
+  "performance": {
+    "test_r2": 0.1320545843913108,
+    "test_rmse": 0.7233983725909844,
+    "test_mae": 0.5596521716435381,
+    "train_r2": 0.6065475033088239
+  },
+  "feature_importance": {
+    "hospitals_500m": 0.3873755207764023,
+    "competitors_200m": 0.33119274532894216,
+    "schools_750m": 0.28143173389465553,
+    "pop_density": 0.0,
+    "ward_population": 0.0,
+    "same_type_competitors": 0.0
+  }
+}

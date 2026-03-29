@@ -16,6 +16,7 @@ class MapManager {
         this.lastAnalysisData = null;
         this.lastAmenitiesReport = null;
         this.lastPopulationData = null;
+        this.lastPopulationDensity = null;
     }
 
     init() {
@@ -383,7 +384,8 @@ class MapManager {
         if (popEl) {
             const metricBox = popEl.closest('.metric');
             if (popValue != null) {
-                popEl.textContent = Number(popValue).toLocaleString() + '/km²';
+                this.lastPopulationDensity = popValue;
+                popEl.textContent = Number(popValue).toLocaleString('en-US', { maximumFractionDigits: 1 }) + '/km²';
                 if (metricBox) metricBox.style.display = 'block';
             } else {
                 if (metricBox) metricBox.style.display = 'none';
@@ -870,7 +872,7 @@ class MapManager {
         const top5List = document.getElementById('top5-list');
         if (top5List) top5List.innerHTML = '<p class="no-data">Click on the map to see results</p>';
 
-        // Hide all metric boxes
+        // Hide all metric boxes and reset stored values
         ['competitor-count', 'road-length', 'population-density'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
@@ -879,6 +881,7 @@ class MapManager {
                 if (metricBox) metricBox.style.display = 'none';
             }
         });
+        this.lastPopulationDensity = null;
 
         const coordsEl = document.getElementById('location-coords');
         if (coordsEl) coordsEl.textContent = '';
@@ -1007,8 +1010,7 @@ class MapManager {
         const { lat, lng } = this.selectedLocation;
         const score = document.getElementById('suitability-score')?.textContent || '-';
         const competitors = document.getElementById('competitor-count')?.textContent || '-';
-        const roadLength = document.getElementById('road-length')?.textContent || '-';
-        const population = document.getElementById('population-density')?.textContent || '-';
+        const populationDensitySidebar = document.getElementById('population-density')?.textContent || '-';
         const cafeTypeFormatted = this.selectedCafeType
             ? this.selectedCafeType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
             : 'Not selected';
@@ -1017,6 +1019,12 @@ class MapManager {
         // Get amenities report and population data
         const amenitiesReport = this.lastAmenitiesReport?.amenities_report || {};
         const populationData = this.lastPopulationData || {};
+
+        // Use the stored population density from the sidebar (API calculated value)
+        let formattedDensityString = '-';
+        if (this.lastPopulationDensity != null) {
+            formattedDensityString = Number(this.lastPopulationDensity).toLocaleString('en-US', { maximumFractionDigits: 1 });
+        }
 
         return `
             <div class="report-section">
@@ -1033,8 +1041,7 @@ class MapManager {
                 <div class="report-grid">
                     <div class="report-item"><strong>Overall Score:</strong><br>${score} / 10</div>
                     <div class="report-item"><strong>Competitors Nearby:</strong><br>${competitors}</div>
-                    <div class="report-item"><strong>Road Accessibility:</strong><br>${roadLength}</div>
-                    <div class="report-item"><strong>Population Density:</strong><br>${population}</div>
+                    <div class="report-item"><strong>Population Density:</strong><br>${formattedDensityString}/km²</div>
                     <div class="report-item"><strong>Total Population (in radius):</strong><br>${populationData && populationData.total_population ? Number(populationData.total_population).toLocaleString() : '0'}</div>
                 </div>
             </div>
@@ -1104,7 +1111,7 @@ class MapManager {
                 <ul>
                     <li><strong>Location Strength:</strong> ${this._getLocationStrength(parseInt(score))}</li>
                     <li><strong>Competition Level:</strong> ${this._getCompetitionLevel(competitors)}</li>
-                    <li><strong>Market Potential:</strong> ${this._getMarketPotential(population)}</li>
+                    <li><strong>Market Potential:</strong> ${this._getMarketPotential(formattedDensityString)}</li>
                     <li><strong>Recommendation:</strong> ${parseFloat(score) >= 7
                         ? 'This location shows good potential for a cafe business.'
                         : parseFloat(score) >= 4
